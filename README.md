@@ -1,75 +1,84 @@
-# Quiz
+# erxes-smart-quiz
 
-Quiz plugin for erxes
+**Автомат шалгалт үүсгэгч ба Сурагчийн үнэлгээний Plugin (Gemma 4 + erxes EdTech)**
 
-An erxes plugin that lives outside the erxes monorepo and joins an erxes stack.
-The shared-library baseline is erxes 3.3.2. Dashed plugin names
-use the same public permission identity in the API and UI; the host must support
-normalized remote discovery and dashed page-module loading (see integration docs).
+Багш нар хичээл бүрийн дараа сурагчдын ойлголтыг шалгах тест зохиох, засах, дүнг нь эцэг эхэд мэдэгдэхэд маш их цаг зарцуулдаг. Бид **Gemma 4**-т суурилсан Автомат Quiz үүсгэгч erxes plugin-ийг бүтээснээр багш лекцийн материалаа (текст, тэмдэглэл, PDF) оруулаад л 1 минутын дотор тест үүсгэж, шалгалт авч, үр дүнг нь сурагчийн erxes профайл дээр автоматаар бүртгэдэг болно.
 
-| Part   | Path         | Stack                                                    | Dev port    |
-| ------ | ------------ | -------------------------------------------------------- | ----------- |
-| API    | `api`        | Node.js 22, erxes-api-shared startPlugin + tenant-scoped Mongoose models (Node.js)                             | 3399 |
-| UI     | `ui`         | React 18 Module Federation remote (Rspack), Tailwind CSS | 3099  |
-| Shared | `erxes.json` | Plugin identity and ports read by both parts             |             |
+---
 
-The UI uses erxes's `erxes-ui`/`ui-modules` design system, installed from npm
-(`@erxes/ui`, `@erxes/ui-modules`; see
-[docs/erxes-integration.md](docs/erxes-integration.md#shared-libraries)). The
-host supplies them at runtime via Module Federation singletons — they are
-installed only so TypeScript and Rspack can resolve the imports.
+## 🏆 Гол онцлогууд ба Шагналын чиглэлүүд
 
-## Develop
+### 1. 🎓 Best EdTech (erxes Integration)
+- **Customer (Contact) Profile холболт**: Сурагч бүр erxes дээр `Customer (Contact)` хэлбэрээр бүртгэлтэй байх ба шалгалт бөглөмөгц авсан оноо, шалгалтын дэлгэрэнгүй үр дүн erxes CRM-ийн `Customer Profile -> Activity Log` руу шууд бичигдэнэ.
+- **Эцэг эхэд мэдэгдэх автоматжуулалт**: Сурагч хангалтгүй дүн (passing score-оос доош) авбал erxes Automations ажиллаж, эцэг эх рүү нь мессеж (SMS), имэйл автоматаар илгээх trigger цацна.
 
-```sh
+### 2. 🧠 Best Use of Gemma 4
+- **Structured Quiz Generation**: Багшийн оруулсан агуулгаас 4 сонголттой (Multiple Choice Questions), зөв хариултын заалттай, концепцын тайлбартай (explanation) шалгалтыг JSON бүтцээр Gemma 4 үүсгэнэ.
+- **Хувийн зөвлөгөө (Personalized Pedagogical Feedback)**: Сурагч буруу хариулбал Gemma 4 сурагчийн хариултад дүн шинжилгээ хийж, "Яагаад буруу вэ, зөв ойлголт нь юу вэ, лекцийн ямар хэсгийг давтах шаардлагатай вэ?" гэсэн урмын үгтэй сурган хүмүүжүүлэх зөвлөгөөг шууд гаргаж өгнө.
+
+### 3. 🌊 Best Open-Source AI (DigitalOcean)
+- **Бүрэн Dockerized & Cloud Ready**: DigitalOcean-ий GPU Droplet эсвэл App Platform дээр 1 командаар асаахад бэлэн `Dockerfile` болон `docker-compose.yml`.
+- **REST & GraphQL Dual API**: erxes микросервисийн GraphQL-ээс гадна `/health`, `/api/generate`, `/api/submit` бүхий REST endpoint-уудыг агуулсан.
+
+---
+
+## 📁 Бүтэц (Architecture)
+
+| Хэсэг | Зам | Үүрэг | Порт |
+| --- | --- | --- | --- |
+| **API** | `api/` | Node.js 22, erxes-api-shared, Mongoose, GraphQL + REST, Gemma 4 Client | 3399 |
+| **UI** | `ui/` | React 18 Module Federation remote (Rspack), Tailwind CSS, erxes-ui | 3099 |
+| **Config** | `erxes.json` | Plugin-ийн нэр, хувилбар, портын тохиргоо | - |
+
+---
+
+## 🚀 Хөгжүүлэлтийн орчин ажиллуулах (Development)
+
+```bash
+# 1. Хамаарлуудыг суулгах
 pnpm install
+
+# 2. Орчны хувьсагч бэлдэх
 cp .env.example .env
-pnpm run dev:api   # registers with the erxes gateway through Redis
-pnpm run dev:ui    # serves http://localhost:3099/remoteEntry.js
+
+# 3. API асаах (Background/Dev)
+pnpm run dev:api
+
+# 4. UI remote асаах
+pnpm run dev:ui
 ```
 
-`check`, `build` and `dev:ui` run `codegen` first, so the generated GraphQL
-types always match the printed API schema.
+### Код шалгах ба build хийх:
 
-In the erxes checkout `.env`, add the plugin and restart the gateway and
-core-api so they pick it up:
-
-```sh
-ENABLED_PLUGINS=...,quiz
+```bash
+pnpm run codegen   # GraphQL schema & client types generate хийх
+pnpm run build     # API болон UI-г бүрэн build хийх
+pnpm run check     # TypeScript typecheck
+pnpm run lint      # oxlint шалгалт
 ```
 
-Then open `http://localhost:3001/quiz` (settings: `/quiz/settings`).
-Both processes must use the same Redis as erxes; `UI_ENTRY_URL` must be
-reachable by the browser, not merely by the API container. Requests reach the
-API through the gateway (`/graphql`), which forwards the signed-in user and
-tenant. Those headers are not independently authenticated: keep the API on
-a private gateway-only network and strip user/tenant headers at public ingress.
+---
 
-## Scripts
+## 🐳 DigitalOcean Deployment
 
-| Script              | What it does                                    |
-| ------------------- | ----------------------------------------------- |
-| `pnpm run dev:api` | API in watch mode                               |
-| `pnpm run dev:ui`  | UI remote dev server                            |
-| `pnpm run codegen` | Print the API schema, generate UI GraphQL types |
-| `pnpm run build`   | Production build of every part                  |
-| `pnpm run check`   | Type-check every part                           |
-| `pnpm run lint`    | oxlint                                          |
-| `pnpm run fmt`     | oxfmt                                           |
+DigitalOcean GPU Droplet дээр ажиллуулах:
 
-## Deploy
+```bash
+cd api
+docker compose up -d
+docker exec -it erxes-gemma4-ollama ollama pull gemma4
+curl http://localhost:3399/health
+```
 
-- **API**: `docker build --build-arg UI_ENTRY_URL=<remoteEntry.js URL> -t <image> .`
-  Run `pnpm install` first and commit its lockfile before building the image.
-  The image serves the API on port 80 and registers itself on start
-  (`plugin-quiz-api:80` unless `LOAD_BALANCER_ADDRESS` is set).
-- **UI**: upload `ui/dist` to a static host or CDN. Upload hashed assets
-  first and `remoteEntry.js` last with `Cache-Control: no-store`. Without
-  `UI_ENTRY_URL`, erxes falls back to `https://plugins.erxes.io/<release>/quiz_ui/remoteEntry.js`;
-  this generator does not upload there. Set your own browser-reachable URL,
-  serve all emitted chunks with CORS for the erxes origin, and use immutable
-  caching only for content-hashed assets (not stable-named expose chunks).
+---
 
-See [docs/erxes-integration.md](docs/erxes-integration.md) for how the plugin
-plugs into erxes and [AGENTS.md](AGENTS.md) for the rules to keep it working.
-# subedei
+## 👥 Багийн гишүүдэд
+
+1. Репог clone хийх:
+   ```bash
+   git clone https://github.com/ariunbold-bo/subedei.git
+   cd subedei
+   pnpm install
+   pnpm build
+   ```
+2. erxes monorepo-ийн `.env` файлын `ENABLED_PLUGINS`-д `quiz` нэмснээр үндсэн erxes системтэй шууд холбогдоно.

@@ -1,0 +1,63 @@
+version: "3.8"
+
+services:
+  quiz_api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: erxes-smart-quiz-api
+    restart: always
+    ports:
+      - "3399:3399"
+    environment:
+      - NODE_ENV=production
+      - PORT=3399
+      - MONGO_URL=mongodb://mongodb:27017/erxes
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - GEMMA_API_URL=http://gemma4-ollama:11434/api/generate
+      - GEMMA_MODEL=gemma4
+    depends_on:
+      - mongodb
+      - redis
+      - gemma4-ollama
+
+  # Gemma 4 LLM Runtime on DigitalOcean GPU Droplet
+  gemma4-ollama:
+    image: ollama/ollama:latest
+    container_name: erxes-gemma4-ollama
+    restart: always
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  mongodb:
+    image: mongo:7.0
+    container_name: erxes-smart-quiz-mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  redis:
+    image: redis:7-alpine
+    container_name: erxes-smart-quiz-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  mongo_data:
+  redis_data:
+  ollama_models:
