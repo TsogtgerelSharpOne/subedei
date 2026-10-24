@@ -1,0 +1,9 @@
+packages:
+  - api
+  - ui
+allowBuilds:
+  '@apollo/protobufjs': true
+  aws-sdk: true
+  core-js-pure: true
+  esbuild: true
+  msgpackr-extract: true
