@@ -1,4 +1,5 @@
 # erxes-smart-quiz
+halo I'm Tsogto.
 
 **Автомат шалгалт үүсгэгч ба Сурагчийн үнэлгээний Plugin (Gemma 4 + erxes EdTech)**
 
