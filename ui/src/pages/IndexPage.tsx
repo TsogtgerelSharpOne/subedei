@@ -2,10 +2,10 @@ import { useQuery } from "@apollo/client";
 import type { ComponentType, ReactNode } from "react";
 import {
   IconBook,
+  IconBrain,
   IconDatabase,
   IconExternalLink,
   IconLayoutDashboard,
-  IconSandbox,
   IconSettings,
 } from "@tabler/icons-react";
 // Root imports on purpose: core-ui shares `erxes-ui`/`ui-modules` as Module
@@ -171,7 +171,7 @@ export const IndexPage = () => (
             <Breadcrumb.Item>
               <Button variant="ghost" asChild>
                 <Link to={`/${path}`}>
-                  <IconSandbox />
+                  <IconBrain />
                   {manifest.title}
                 </Link>
               </Button>
@@ -181,7 +181,7 @@ export const IndexPage = () => (
         <Separator.Inline />
         <PageHeader.FavoriteToggleButton
           breadcrumb={[manifest.title]}
-          icon="IconSandbox"
+          icon="IconBrain"
         />
       </PageHeader.Start>
       <PageHeader.End>
